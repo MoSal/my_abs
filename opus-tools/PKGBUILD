@@ -1,0 +1,47 @@
+pkgname=opus-tools
+pkgver=324_f2a2e88_v0.1.9+8
+pkgrel=1
+epoch=3
+pkgdesc="Tools for Opus - The low-latency hybrid audio codec including silk & celt"
+arch=(x86_64)
+url="http://opus-codec.org"
+license=('BSD')
+depends=(libopus.so)
+makedepends=('git')
+source=($pkgname::git://git.xiph.org/opus-tools.git
+       )
+        #try_fix_OSS4.patch
+md5sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/$pkgname"
+  last_tag="$(git describe --tags --abbrev=0 HEAD || echo '')"
+  if [[ -n $last_tag  ]]; then
+	  echo "$(git rev-list --count HEAD)_$(git rev-parse --short HEAD)_${last_tag//-/.}+$(git rev-list --skip=`git rev-list --count ${last_tag}` --count HEAD)"
+  else
+	  echo "$(git rev-list --count HEAD)_$(git rev-parse --short HEAD)"
+  fi
+}
+
+echo <<DIS
+prepare() {
+  cd "$srcdir/$pkgname"
+
+  for f in "$srcdir"/*.patch; do
+    patch -Np1 <"$f"
+  done
+}
+DIS
+
+build() {
+  cd "$srcdir/$pkgname"
+
+  ./autogen.sh
+  ./configure --prefix=/usr --disable-doc
+  make
+}
+
+package() {
+  cd "$srcdir/$pkgname"
+  make DESTDIR="$pkgdir/" install
+} 

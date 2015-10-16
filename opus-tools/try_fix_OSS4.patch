@@ -1,0 +1,36 @@
+ src/opusdec.c | 11 +++--------
+ 1 file changed, 3 insertions(+), 8 deletions(-)
+
+diff --git a/src/opusdec.c b/src/opusdec.c
+index ac9933f..745e24e 100644
+--- a/src/opusdec.c
++++ b/src/opusdec.c
+@@ -290,12 +290,13 @@ FILE *out_file_open(char *outFile, int *wav_format, int rate, int mapping_family
+    {
+ #if defined HAVE_SYS_SOUNDCARD_H
+       int audio_fd, format, stereo;
+-      audio_fd=open("/dev/dsp", O_WRONLY);
+-      if (audio_fd<0)
++      fout=fopen("/dev/dsp", "w");
++      if(!fout)
+       {
+          perror("Cannot open /dev/dsp");
+          quit(1);
+       }
++      audio_fd=fileno(fout);
+ 
+       format=AFMT_S16_NE;
+       if (ioctl(audio_fd, SNDCTL_DSP_SETFMT, &format)==-1)
+@@ -338,12 +339,6 @@ FILE *out_file_open(char *outFile, int *wav_format, int rate, int mapping_family
+          close(audio_fd);
+          quit(1);
+       }
+-      fout = fdopen(audio_fd, "w");
+-      if(!fout)
+-      {
+-        perror("Cannot open output");
+-        quit(1);
+-      }
+ #elif defined HAVE_LIBSNDIO
+       struct sio_par par;
+ 

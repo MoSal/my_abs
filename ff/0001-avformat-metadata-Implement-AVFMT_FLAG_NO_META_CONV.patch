@@ -1,0 +1,201 @@
+From b81f1145a8e2d3af119ce9ffafd0c1fda1f6c024 Mon Sep 17 00:00:00 2001
+From: Mohammad Alsaleh <CE.Mohammad.AlSaleh@gmail.com>
+Date: Mon, 11 Aug 2014 14:41:16 +0300
+Subject: [PATCH] avformat/metadata: Implement AVFMT_FLAG_NO_META_CONV
+
+ Decoders/parsers run ff_metadata_conv() unconditionally. This makes
+ it impossible to retrieve or keep original metadata field names.
+
+ If one wishes to skip ff_metadata_conv() calls at the decoding/parsing
+ stage. This patch implements AVFMT_FLAG_NO_META_CONV which is set by
+ the decoding fflag opt parameter 'nometaconv'.
+
+Signed-off-by: Mohammad Alsaleh <CE.Mohammad.AlSaleh@gmail.com>
+---
+ doc/APIchanges               |  3 +++
+ doc/formats.texi             |  2 ++
+ libavformat/asfdec.c         |  3 ++-
+ libavformat/avformat.h       |  1 +
+ libavformat/id3v2.c          | 17 ++++++++++++-----
+ libavformat/matroskadec.c    |  4 +++-
+ libavformat/metadata.c       |  4 ++++
+ libavformat/oggparsevorbis.c |  3 ++-
+ libavformat/options_table.h  |  1 +
+ libavformat/version.h        |  2 +-
+ libavformat/wtvdec.c         |  3 ++-
+ 11 files changed, 33 insertions(+), 10 deletions(-)
+
+diff --git a/doc/APIchanges b/doc/APIchanges
+index b7961ae..854563a 100644
+--- a/doc/APIchanges
++++ b/doc/APIchanges
+@@ -15,6 +15,9 @@ libavutil:     2014-08-09
+ 
+ API changes, most recent first:
+ 
++2014-08-xx - xxxxxxx - lavf 56.1.100 - avformat.h
++  Add AVFMT_FLAG_NO_META_CONV.
++
+ 2014-04-xx - xxxxxxx - lavr 2.1.0 - avresample.h
+   Add avresample_convert_frame() and avresample_config().
+ 
+diff --git a/doc/formats.texi b/doc/formats.texi
+index 027510e..92c079d 100644
+--- a/doc/formats.texi
++++ b/doc/formats.texi
+@@ -51,6 +51,8 @@ Discard corrupted frames.
+ Try to interleave output packets by DTS.
+ @item keepside
+ Do not merge side data.
++@item nometaconv
++Skip conversion of metadata field names.
+ @item latm
+ Enable RTP MP4A-LATM payload.
+ @item nobuffer
+diff --git a/libavformat/asfdec.c b/libavformat/asfdec.c
+index 5fc293e..13c7806 100644
+--- a/libavformat/asfdec.c
++++ b/libavformat/asfdec.c
+@@ -862,7 +862,8 @@ static int asf_read_header(AVFormatContext *s)
+         }
+     }
+ 
+-    ff_metadata_conv(&s->metadata, NULL, ff_asf_metadata_conv);
++    if (!(s->flags & AVFMT_FLAG_NO_META_CONV))
++        ff_metadata_conv(&s->metadata, NULL, ff_asf_metadata_conv);
+ 
+     return 0;
+ }
+diff --git a/libavformat/avformat.h b/libavformat/avformat.h
+index a4f7ed7..12fba94 100644
+--- a/libavformat/avformat.h
++++ b/libavformat/avformat.h
+@@ -1287,6 +1287,7 @@ typedef struct AVFormatContext {
+ #define AVFMT_FLAG_SORT_DTS    0x10000 ///< try to interleave outputted packets by dts (using this flag can slow demuxing down)
+ #define AVFMT_FLAG_PRIV_OPT    0x20000 ///< Enable use of private options by delaying codec open (this could be made default once all code is converted)
+ #define AVFMT_FLAG_KEEP_SIDE_DATA 0x40000 ///< Don't merge side data but keep it separate.
++#define AVFMT_FLAG_NO_META_CONV 0x80000 ///< Skip conversion of metadata field names.
+ 
+     /**
+      * @deprecated deprecated in favor of probesize2
+diff --git a/libavformat/id3v2.c b/libavformat/id3v2.c
+index fb89e83..c2bcbe0 100644
+--- a/libavformat/id3v2.c
++++ b/libavformat/id3v2.c
+@@ -574,8 +574,11 @@ static void read_chapter(AVFormatContext *s, AVIOContext *pb, int len, char *tta
+         len -= taglen;
+     }
+ 
+-    ff_metadata_conv(&chapter->metadata, NULL, ff_id3v2_34_metadata_conv);
+-    ff_metadata_conv(&chapter->metadata, NULL, ff_id3v2_4_metadata_conv);
++    if (!(s->flags & AVFMT_FLAG_NO_META_CONV)) {
++        ff_metadata_conv(&chapter->metadata, NULL, ff_id3v2_34_metadata_conv);
++        ff_metadata_conv(&chapter->metadata, NULL, ff_id3v2_4_metadata_conv);
++    }
++
+ end:
+     av_free(dst);
+ }
+@@ -916,9 +919,13 @@ static void id3v2_read_internal(AVIOContext *pb, AVDictionary **metadata,
+             avio_seek(pb, off, SEEK_SET);
+         }
+     } while (found_header);
+-    ff_metadata_conv(metadata, NULL, ff_id3v2_34_metadata_conv);
+-    ff_metadata_conv(metadata, NULL, id3v2_2_metadata_conv);
+-    ff_metadata_conv(metadata, NULL, ff_id3v2_4_metadata_conv);
++
++    if (!(s->flags & AVFMT_FLAG_NO_META_CONV)) {
++        ff_metadata_conv(metadata, NULL, ff_id3v2_34_metadata_conv);
++        ff_metadata_conv(metadata, NULL, id3v2_2_metadata_conv);
++        ff_metadata_conv(metadata, NULL, ff_id3v2_4_metadata_conv);
++    }
++
+     merge_date(metadata);
+ }
+ 
+diff --git a/libavformat/matroskadec.c b/libavformat/matroskadec.c
+index 31ee456..347dbcd 100644
+--- a/libavformat/matroskadec.c
++++ b/libavformat/matroskadec.c
+@@ -1377,7 +1377,9 @@ static void matroska_convert_tag(AVFormatContext *s, EbmlList *list,
+                 matroska_convert_tag(s, &tags[i].sub, metadata, key);
+         }
+     }
+-    ff_metadata_conv(metadata, NULL, ff_mkv_metadata_conv);
++
++    if (!(s->flags & AVFMT_FLAG_NO_META_CONV))
++        ff_metadata_conv(metadata, NULL, ff_mkv_metadata_conv);
+ }
+ 
+ static void matroska_convert_tags(AVFormatContext *s)
+diff --git a/libavformat/metadata.c b/libavformat/metadata.c
+index b9b6de7..bba7af7 100644
+--- a/libavformat/metadata.c
++++ b/libavformat/metadata.c
+@@ -60,6 +60,10 @@ void ff_metadata_conv_ctx(AVFormatContext *ctx, const AVMetadataConv *d_conv,
+                                                 const AVMetadataConv *s_conv)
+ {
+     int i;
++
++    if (s_conv && (ctx->flags & AVFMT_FLAG_NO_META_CONV))
++        return;
++
+     ff_metadata_conv(&ctx->metadata, d_conv, s_conv);
+     for (i=0; i<ctx->nb_streams ; i++)
+         ff_metadata_conv(&ctx->streams [i]->metadata, d_conv, s_conv);
+diff --git a/libavformat/oggparsevorbis.c b/libavformat/oggparsevorbis.c
+index 8103d9d..17f0dd2 100644
+--- a/libavformat/oggparsevorbis.c
++++ b/libavformat/oggparsevorbis.c
+@@ -176,7 +176,8 @@ int ff_vorbis_comment(AVFormatContext *as, AVDictionary **m,
+         av_log(as, AV_LOG_INFO,
+                "truncated comment header, %i comments not found\n", n);
+ 
+-    ff_metadata_conv(m, NULL, ff_vorbiscomment_metadata_conv);
++    if (!(as->flags & AVFMT_FLAG_NO_META_CONV))
++        ff_metadata_conv(m, NULL, ff_vorbiscomment_metadata_conv);
+ 
+     return 0;
+ }
+diff --git a/libavformat/options_table.h b/libavformat/options_table.h
+index 94cd65c..24ec130 100644
+--- a/libavformat/options_table.h
++++ b/libavformat/options_table.h
+@@ -49,6 +49,7 @@ static const AVOption avformat_options[] = {
+ {"discardcorrupt", "discard corrupted frames", 0, AV_OPT_TYPE_CONST, {.i64 = AVFMT_FLAG_DISCARD_CORRUPT }, INT_MIN, INT_MAX, D, "fflags"},
+ {"sortdts", "try to interleave outputted packets by dts", 0, AV_OPT_TYPE_CONST, {.i64 = AVFMT_FLAG_SORT_DTS }, INT_MIN, INT_MAX, D, "fflags"},
+ {"keepside", "don't merge side data", 0, AV_OPT_TYPE_CONST, {.i64 = AVFMT_FLAG_KEEP_SIDE_DATA }, INT_MIN, INT_MAX, D, "fflags"},
++{"nometaconv", "skip conversion of metadata field names", 0, AV_OPT_TYPE_CONST, {.i64 = AVFMT_FLAG_NO_META_CONV }, INT_MIN, INT_MAX, D, "fflags"},
+ {"latm", "enable RTP MP4A-LATM payload", 0, AV_OPT_TYPE_CONST, {.i64 = AVFMT_FLAG_MP4A_LATM }, INT_MIN, INT_MAX, E, "fflags"},
+ {"nobuffer", "reduce the latency introduced by optional buffering", 0, AV_OPT_TYPE_CONST, {.i64 = AVFMT_FLAG_NOBUFFER }, 0, INT_MAX, D, "fflags"},
+ {"seek2any", "allow seeking to non-keyframes on demuxer level when supported", OFFSET(seek2any), AV_OPT_TYPE_INT, {.i64 = 0 }, 0, 1, D},
+diff --git a/libavformat/version.h b/libavformat/version.h
+index 1cbb889..c09bd88 100644
+--- a/libavformat/version.h
++++ b/libavformat/version.h
+@@ -30,7 +30,7 @@
+ #include "libavutil/version.h"
+ 
+ #define LIBAVFORMAT_VERSION_MAJOR 56
+-#define LIBAVFORMAT_VERSION_MINOR  0
++#define LIBAVFORMAT_VERSION_MINOR  1
+ #define LIBAVFORMAT_VERSION_MICRO 100
+ 
+ #define LIBAVFORMAT_VERSION_INT AV_VERSION_INT(LIBAVFORMAT_VERSION_MAJOR, \
+diff --git a/libavformat/wtvdec.c b/libavformat/wtvdec.c
+index c70057c..644f0a2 100644
+--- a/libavformat/wtvdec.c
++++ b/libavformat/wtvdec.c
+@@ -549,7 +549,8 @@ static void parse_legacy_attrib(AVFormatContext *s, AVIOContext *pb)
+         get_tag(s, pb, key, type, length);
+     }
+ 
+-    ff_metadata_conv(&s->metadata, NULL, ff_asf_metadata_conv);
++    if (!(s->flags & AVFMT_FLAG_NO_META_CONV))
++        ff_metadata_conv(&s->metadata, NULL, ff_asf_metadata_conv);
+ }
+ 
+ /**
+-- 
+2.0.4
+

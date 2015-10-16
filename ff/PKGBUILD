@@ -1,0 +1,101 @@
+pkgbase=ffmpeg
+#pkgname=(ff-opt)
+pkgname=(ff)
+pkgver=74896_b72c184_n2.8+0
+pkgrel=1
+epoch=1
+pkgdesc="Complete and free Internet live audio and video broadcasting solution"
+arch=('x86_64')
+url="http://ffmpeg.org"
+license=('GPL')
+depends=('fribidi' 'sdl' 'lame' 'schroedinger' 'libvpx' 'rtmpdump' 'libvorbis' 'speex' 'faac' 'xvidcore' 'imlib2' 'x264' 'x265' 'libtheora' 'libvorbis' 'libfdk-aac' 'openjpeg' 'opencore-amr' 'opus' 'libvidstab' 'openssl' 'libva' 'wavpack' 'libbluray' 'dcadec')
+makedepends=('yasm' 'git')
+provides=('ffmpeg' 'libav')
+conflicts=('ffmpeg' 'libav')
+replaces=('ffmpeg' 'libav')
+source=($pkgbase::git://git.videolan.org/ffmpeg.git
+        avformat-metadata-Implement-AVFMT_FLAG_NO_META_CONV.patch
+	)
+md5sums=('SKIP'
+         '366c291a71d450547eb6b9d550e8dc95')
+
+CFLAGS="${CFLAGS/-O2/-Ofast}"
+#export LDFLAGS+=" -Wl,-rpath=/opt/lib"
+
+#export CFLAGS+=" -fno-lto" LDFLAGS+=" -fno-lto"
+#options=('!strip')
+#export CFLAGS+=" -O0 -g2"
+
+pkgver() {
+  cd "$srcdir/$pkgbase"
+  last_tag="$(git describe --tags --abbrev=0 HEAD || echo '')"
+  if [[ -n $last_tag  ]]; then
+	  echo "$(git rev-list --count HEAD)_$(git rev-parse --short HEAD)_${last_tag//-/.}+$(git rev-list --skip=`git rev-list --count ${last_tag}` --count HEAD)"
+  else
+	  echo "$(git rev-list --count HEAD)_$(git rev-parse --short HEAD)"
+  fi
+}
+
+prepare() {
+  cd "$srcdir/$pkgbase"
+
+  for f in "$srcdir"/*.patch; do
+    patch -Np1 <$f
+  done
+}
+
+build() {
+  cd "$srcdir/$pkgbase"
+
+  #--prefix=/opt \
+  #--bindir=/usr/bin \
+  #--mandir=/usr/man \
+  ./configure \
+  --prefix=/usr \
+  --enable-gpl \
+  --enable-nonfree \
+  --enable-version3 \
+  --enable-avresample \
+  --enable-openssl \
+  --enable-libmp3lame \
+  --enable-libspeex \
+  --enable-libx264 \
+  --enable-libx265 \
+  --enable-libxvid \
+  --enable-libschroedinger \
+  --enable-libvpx \
+  --enable-libopencore-amrnb \
+  --enable-libopencore-amrwb \
+  --enable-libtheora \
+  --enable-libvorbis \
+  --enable-libfdk-aac \
+  --enable-libopus \
+  --enable-libsoxr \
+  --enable-libass \
+  --enable-libopenjpeg \
+  --enable-libfreetype \
+  --enable-libfribidi \
+  --enable-libvidstab \
+  --enable-libwavpack \
+  --enable-libdcadec \
+  --enable-libbluray \
+  --enable-shared \
+  --enable-pthreads \
+  --enable-x11grab \
+  --enable-pic \
+  --disable-frei0r \
+  --disable-static \
+  --disable-debug \
+  --enable-runtime-cpudetect || return 1 # frei0r is disabled due to circular dependencies passing through xine-lib
+  #--enable-lto \
+  #--enable-librtmp \
+  #make V=1 || return 1
+  make || return 1
+  make tools/qt-faststart
+}
+
+package_ff() {
+  cd "$srcdir/$pkgbase"
+  make DESTDIR="$pkgdir" install install-man || return 1
+  install -D -m755 tools/qt-faststart "$pkgdir/usr/bin/qt-faststart" 
+}

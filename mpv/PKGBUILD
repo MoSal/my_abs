@@ -1,0 +1,55 @@
+pkgbase=mpv
+pkgname=("$pkgbase")
+epoch=2
+pkgver=41942_bad743a_v0.1.0+6142
+pkgrel=1
+pkgdesc="mplayer2/MPlayer fork"
+url="http://mpv.io"
+arch=(x86_64)
+license=('GPL')
+depends=('libass' 'ff' 'libmad' 'giflib' 'libgl' 'libxv' 'fribidi' 'libdvdread' 'libcdio-paranoia' 'libquvi' 'libbluray' 'mpg123' 'lcms2')
+makedepends=('python-docutils' 'pkg-config' 'yasm' 'git' 'live-media')
+source=($pkgbase::git://github.com/mpv-player/mpv.git
+)
+        #0001-Implement-osd-text.patch
+md5sums=('SKIP'
+)
+
+         #'02e26f08d15d00248806feeef2fdc921'
+#options=('debug')
+
+CFLAGS="${CFLAGS/-O2/-Ofast}"
+
+pkgver() {
+  cd "$srcdir/$pkgbase"
+  last_tag="$(git describe --tags --abbrev=0 HEAD || echo '')"
+  if [[ -n $last_tag  ]]; then
+	  echo "$(git rev-list --count HEAD)_$(git rev-parse --short HEAD)_${last_tag//-/.}+$(git rev-list --skip=`git rev-list --count ${last_tag}` --count HEAD)"
+  else
+	  echo "$(git rev-list --count HEAD)_$(git rev-parse --short HEAD)"
+  fi
+}
+
+prepare() {
+  cd "$srcdir/$pkgbase"
+
+  # Revert DVD/BD menu support removal
+  #git revert -n 3b3170aedb4c8a9bfa32238f3b580feea22071f8
+
+  #for f in $srcdir/*.patch ;do 
+  #  patch -Np1 <$f
+  #done
+  ./bootstrap.py
+}
+
+build() {
+  cd "$srcdir/$pkgbase"
+  ./waf configure --prefix="/usr" --confdir="/etc/mpv" --enable-zsh-comp --disable-libsmbclient || return 1
+  ./waf -v build --confdir="/etc/mpv" || return 1
+}
+
+package_mpv() {
+  cd "$srcdir/$pkgname"
+  ./waf install --destdir="$pkgdir" install || return 1
+  install -D -m0775 TOOLS/mpv_identify.sh "$pkgdir"/usr/bin/ || return 1
+}

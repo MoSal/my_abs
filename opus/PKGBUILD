@@ -1,0 +1,39 @@
+pkgname=opus
+pkgver=3387_3a1dc9d_draft.ietf.codec.oggopus.06+48
+pkgrel=1
+epoch=3
+pkgdesc="The low-latency hybrid audio codec including silk & celt"
+arch=(x86_64)
+url="http://opus-codec.org"
+license=('BSD')
+makedepends=('git')
+#source=($pkgname::git://git.xiph.org/opus.git)
+source=($pkgname::git+https://git.xiph.org/opus.git)
+provides=(libopus.so)
+md5sums=('SKIP')
+
+#CFLAGS+=" -O3 -ffast-math" # Chromium Bug https://code.google.com/p/chromium/issues/detail?id=152407
+CFLAGS+=" -O3" # -ffast-math is discouraged
+
+pkgver() {
+  cd "$srcdir/$pkgname"
+  last_tag="$(git describe --tags --abbrev=0 HEAD || echo '')"
+  if [[ -n $last_tag  ]]; then
+	  echo "$(git rev-list --count HEAD)_$(git rev-parse --short HEAD)_${last_tag//-/.}+$(git rev-list --skip=`git rev-list --count ${last_tag}` --count HEAD)"
+  else
+	  echo "$(git rev-list --count HEAD)_$(git rev-parse --short HEAD)"
+  fi
+}
+
+build() {
+  cd "$srcdir/$pkgname"
+
+  ./autogen.sh
+  ./configure --prefix=/usr
+  make
+}
+
+package() {
+  cd "$srcdir/$pkgname"
+  make DESTDIR="$pkgdir/" install
+} 

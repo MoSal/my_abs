@@ -1,0 +1,45 @@
+pkgbase=x264
+pkgname=(x264-8b-sys x264-8b)
+pkgver=2597_e86f3a1
+epoch=2
+pkgrel=1
+pkgdesc="free library for encoding H264/AVC video streams"
+arch=('x86_64')
+license=('GPL')
+makedepends=('yasm' 'pkg-config' 'git')
+url="http://www.videolan.org/developers/x264.html"
+source=($pkgbase::git+file:///home/user64/abs/x264-10b/x264)
+md5sums=('SKIP')
+
+CFLAGS="${CFLAGS/-O2/-Ofast}"
+
+pkgver() {
+  cd "$srcdir/$pkgbase"
+  last_tag="$(git describe --tags --abbrev=0 HEAD || echo '')"
+  if [[ -n $last_tag  ]]; then
+	  echo "$(git rev-list --count HEAD)_$(git rev-parse --short HEAD)_${last_tag//-/.}+$(git rev-list --skip=`git rev-list --count ${last_tag}` --count HEAD)"
+  else
+	  echo "$(git rev-list --count HEAD)_$(git rev-parse --short HEAD)"
+  fi
+}
+
+build() {
+  cd "$srcdir/$pkgbase"
+  # TODO: use 10bits when gst is ready
+  #./configure --prefix=/usr --bit-depth=10 --enable-shared || return 1
+  ./configure --prefix=/usr --bit-depth=8 --enable-shared || return 1
+  make || return 1
+}
+
+package_x264-8b-sys() {
+  conflicts=(x264 x264-10b-sys libx264 libx264-10bit)
+  provides=(x264 x264-10b-sys libx264 libx264-10bit libx264.so)
+  replaces=(x264 x264-10b-sys libx264 libx264-10bit)
+  cd "$srcdir/$pkgbase"
+  make DESTDIR="$pkgdir" install || return 1
+}
+
+package_x264-8b() {
+  cd "$srcdir/$pkgbase"
+  make DESTDIR="$pkgdir/opt/$pkgname" install || return 1
+}

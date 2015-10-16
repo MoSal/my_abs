@@ -1,0 +1,33 @@
+pkgname=x265
+pkgrel=1
+epoch=1
+pkgver=1.7.481.5dde4773fcef
+pkgdesc="free H265/HEVC video encoder"
+arch=('i686' 'x86_64')
+license=('GPL')
+makedepends=('yasm' 'cmake' 'mercurial')
+url="https://bitbucket.org/multicoreware/x265"
+source=('hg+https://bitbucket.org/multicoreware/x265')
+md5sums=('SKIP')
+
+CFLAGS="${CFLAGS/-O2/-Ofast}"
+
+pkgver() {
+  cd "${srcdir}/x265/source"
+  echo "$(cmake . | grep "x265 version" | cut -d ' ' -f4 | tr - . | tr + .)"
+  rm CMakeCache.txt
+}
+
+build() {
+  cd "${srcdir}"/x265/build/linux
+  cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/usr ../../source
+  make
+}
+package() {
+  cd "${srcdir}"/x265/build/linux
+  make DESTDIR="${pkgdir}" install
+  #install -D -m755 "${srcdir}"/x265/build/linux/x265 "${pkgdir}"/usr/bin/x265
+  #install -D -m644 "${srcdir}"/x265/build/linux/libx265.so "${pkgdir}"/usr/lib/libx265.so
+  #install -D -m644 "${srcdir}"/x265/build/linux/x265_config.h "${pkgdir}"/usr/include/x265_config.h
+  #install -D -m644 "${srcdir}"/x265/source/x265.h "${pkgdir}"/usr/include/x265.h
+}

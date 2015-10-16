@@ -1,0 +1,37 @@
+pkgbase=dcadec
+pkgname=(dcadec)
+pkgver=207_2a9186e
+pkgrel=1
+pkgdesc='DTS Coherent Acoustics decoder with support for HD extensions'
+arch=('i686' 'x86_64')
+url='https://github.com/foo86/dcadec.git'
+license=('LGPL2.1')
+depends=('glibc')
+makedepends=('git')
+source=("${pkgbase}::git://github.com/foo86/dcadec.git")
+md5sums=('SKIP')
+
+CFLAGS="${CFLAGS/-O2/-Ofast}"
+
+pkgver() {
+  cd "$srcdir/$pkgbase"
+  last_tag="$(git describe --tags --abbrev=0 HEAD || echo '')"
+  if [[ -n $last_tag  ]]; then
+	  echo "$(git rev-list --count HEAD)_$(git rev-parse --short HEAD)_${last_tag//-/.}+$(git rev-list --skip=`git rev-list --count ${last_tag}` --count HEAD)"
+  else
+	  echo "$(git rev-list --count HEAD)_$(git rev-parse --short HEAD)"
+  fi
+}
+
+build() {
+  cd "$srcdir/$pkgbase"
+  make CONFIG_SHARED='TRUE'
+}
+
+package_dcadec() {
+  cd "$srcdir/$pkgbase"
+  make CONFIG_SHARED='TRUE' PREFIX='/usr' DESTDIR="${pkgdir}" install
+  mv "${pkgdir}"/usr/bin/{dcadec,dcahddec}
+}
+
+# vim: ts=2 sw=2 et:

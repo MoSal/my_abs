@@ -1,0 +1,45 @@
+pkgbase=libvpx
+pkgname=(libvpx)
+pkgver=13844_55c6a74_v1.4.0+865
+pkgrel=1
+epoch=1
+pkgdesc="The VP8/VP9 Codec SDK"
+arch=('i686' 'x86_64')
+url="http://www.webmproject.org/"
+license=('BSD')
+depends=('glibc')
+makedepends=('yasm')
+source=($pkgbase::git+http://chromium.googlesource.com/webm/libvpx.git)
+#source=($pkgbase::git+http://git.chromium.org/webm/libvpx.git#branch=experimental)
+md5sums=('SKIP')
+
+CFLAGS="${CFLAGS/-O2/-Ofast}"
+
+pkgver() {
+  cd "$srcdir/$pkgbase"
+  last_tag="$(git describe --tags --abbrev=0 HEAD || echo '')"
+  if [[ -n $last_tag  ]]; then
+	  echo "$(git rev-list --count HEAD)_$(git rev-parse --short HEAD)_${last_tag//-/.}+$(git rev-list --skip=`git rev-list --count ${last_tag}` --count HEAD)"
+  else
+	  echo "$(git rev-list --count HEAD)_$(git rev-parse --short HEAD)"
+  fi
+}
+
+build() {
+    cd "$srcdir/$pkgbase"
+    ./configure --prefix=/usr --enable-vp8 --enable-vp9 \
+        --enable-runtime-cpu-detect \
+        --enable-shared \
+        --enable-postproc \
+        --enable-pic \
+	--disable-unit-tests \
+        --disable-install-docs \
+        --disable-install-srcs
+    make
+}
+
+package_libvpx() {
+    cd "$srcdir/$pkgbase"
+    make DIST_DIR="$pkgdir/usr" install
+    install -D -m 0644 LICENSE "$pkgdir/usr/share/licenses/${pkgname}/LICENSE"
+}

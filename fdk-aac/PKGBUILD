@@ -1,0 +1,39 @@
+pkgname=fdk-aac
+pkgver=154_83ac4a9_v0.1.4+0
+epoch=1
+pkgrel=1
+pkgdesc="AAC encoding library by Fraunhofer"
+arch=(i686 x86_64)
+url="http://sourceforge.net/projects/opencore-amr/files/fdk-aac"
+license=('GPL')
+source=($pkgname::git://github.com/mstorsjo/fdk-aac.git)
+provides=(lib$pkgname)
+conflicts=(lib$pkgname)
+replaces=(lib$pkgname)
+md5sums=('SKIP')
+
+CFLAGS="${CFLAGS/-O2/-Ofast}"
+
+build() {
+  cd "$srcdir/$pkgname"
+  autoreconf -fi
+  ./configure --prefix=/usr --enable-example
+  make
+}
+
+pkgver() {
+  cd "$srcdir/$pkgname"
+  last_tag="$(git describe --tags --abbrev=0 HEAD || echo '')"
+  if [[ -n $last_tag  ]]; then
+	  echo "$(git rev-list --count HEAD)_$(git rev-parse --short HEAD)_${last_tag//-/.}+$(git rev-list --skip=`git rev-list --count ${last_tag}` --count HEAD)"
+  else
+	  echo "$(git rev-list --count HEAD)_$(git rev-parse --short HEAD)"
+  fi
+}
+
+package() {
+  cd "$srcdir/$pkgname"
+  make DESTDIR="$pkgdir/" install
+}
+
+# vim:set ts=2 sw=2 et:

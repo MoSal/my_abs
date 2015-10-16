@@ -1,0 +1,36 @@
+pkgbase=libvidstab
+pkgname=("$pkgbase")
+pkgver=157_97c6ae2_release.0.98a+20
+pkgrel=1
+pkgdesc="Transcode video stabilization plugin"
+arch=('i686' 'x86_64')
+url="http://public.hronopik.de/vid.stab/"
+license=('GPL')
+makedepends=('git' 'cmake')
+source=($pkgbase::git://github.com/georgmartius/vid.stab.git)
+md5sums=('SKIP')
+
+CFLAGS="${CFLAGS/-O2/-Ofast}"
+
+pkgver() {
+  cd "$srcdir/$pkgbase"
+  last_tag="$(git describe --tags --abbrev=0 HEAD || echo '')"
+  if [[ -n $last_tag  ]]; then
+	  echo "$(git rev-list --count HEAD)_$(git rev-parse --short HEAD)_${last_tag//-/.}+$(git rev-list --skip=`git rev-list --count ${last_tag}` --count HEAD)"
+  else
+	  echo "$(git rev-list --count HEAD)_$(git rev-parse --short HEAD)"
+  fi
+}
+
+build() {
+  cd "$srcdir/$pkgbase"
+  cmake . -DCMAKE_INSTALL_PREFIX=/usr
+  make
+}
+
+package_libvidstab() {
+  cd "$srcdir/$pkgbase"
+  make DESTDIR="$pkgdir/" install
+}
+
+# vim:set ts=2 sw=2 et:
