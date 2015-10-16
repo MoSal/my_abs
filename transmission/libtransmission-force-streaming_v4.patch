@@ -1,0 +1,13 @@
+--- libtransmission/peer-mgr.c.orig	2013-06-29 00:33:45.262779996 +0300
++++ libtransmission/peer-mgr.c	2013-06-29 00:36:31.099652507 +0300
+@@ -979,6 +979,10 @@
+   if (ia > ib) return -1;
+   if (ia < ib) return 1;
+ 
++  /* 2.5: soft-streaming: lower index first */
++  if (a->index < b->index) return -1;
++  if (a->index > b->index) return 1;
++
+   /* tertiary key: rarest first. */
+   ia = rep[a->index];
+   ib = rep[b->index];

@@ -1,0 +1,52 @@
+pkgbase=transmission
+pkgname=('transmission-cli')
+pkgver=2.84
+epoch=1
+pkgrel=5
+arch=('i686' 'x86_64')
+url="http://www.transmissionbt.com/"
+license=('MIT')
+makedepends=('intltool' 'curl' 'libevent')
+
+# Warning: Not only those patches disable randomization. But they also
+# Disable rarest-first.
+source=(http://mirrors.m0k.org/transmission/files/$pkgbase-$pkgver.tar.xz
+        libtransmission-force-streaming_v4.patch
+        libtransmission-set_at_least_first_2MiB_last_6MiB_of_non-low_priority_files_to_high_priority.patch
+        libtransmission-lower_some_timeouts.patch
+        use_KiB_MiB_GiB_TiB_units.patch
+)
+md5sums=('411aec1c418c14f6765710d89743ae42'
+         '169acbb195496c441033912ba79bfee3'
+         'd891627f58e5cfa9093c039963afe56c'
+         '7a9a40024dcb868b71e6416439038a54'
+         'ce57a5328c8fce0857f113f3707036ab')
+
+prepare() {
+  cd $pkgbase-$pkgver
+  for p in "$srcdir"/*.patch ; do
+	  patch -Np0 <"$p"
+  done
+}
+
+build() {
+  cd $pkgbase-$pkgver
+
+  ./configure --prefix=/usr --without-gtk
+  make
+}
+package_transmission-cli() {
+  pkgdesc="Fast, easy, and free BitTorrent client (CLI tools, daemon and web client)"
+  depends=('curl' 'libevent')
+  install=transmission-cli.install
+
+  cd $pkgbase-$pkgver
+
+  for dir in daemon cli web utils
+  do
+      make -C "$dir" DESTDIR="$pkgdir" install
+  done
+
+  install -D -m644 "daemon/transmission-daemon.service" "$pkgdir/usr/lib/systemd/system/transmission.service"
+  install -D -m644 COPYING "$pkgdir/usr/share/licenses/transmission-cli/COPYING"
+}

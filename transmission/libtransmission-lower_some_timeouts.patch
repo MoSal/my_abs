@@ -1,0 +1,46 @@
+--- libtransmission/peer-mgr.c.orig	2013-08-09 05:45:40.358416160 +0300
++++ libtransmission/peer-mgr.c	2014-02-10 02:50:51.773622133 +0200
+@@ -45,10 +45,10 @@
+ enum
+ {
+   /* how frequently to cull old atoms */
+-  ATOM_PERIOD_MSEC = (60 * 1000),
++  ATOM_PERIOD_MSEC = (40 * 1000),
+ 
+   /* how frequently to change which peers are choked */
+-  RECHOKE_PERIOD_MSEC = (10 * 1000),
++  RECHOKE_PERIOD_MSEC = (8 * 1000),
+ 
+   /* an optimistically unchoked peer is immune from rechoking
+      for this many calls to rechokeUploads (). */
+@@ -58,7 +58,7 @@
+   BANDWIDTH_PERIOD_MSEC = 500,
+ 
+   /* how frequently to age out old piece request lists */
+-  REFILL_UPKEEP_PERIOD_MSEC = (10 * 1000),
++  REFILL_UPKEEP_PERIOD_MSEC = (8 * 1000),
+ 
+   /* how frequently to decide which peers live and die */
+   RECONNECT_PERIOD_MSEC = 500,
+@@ -80,7 +80,7 @@
+ 
+   /* amount of time to keep a list of request pieces lying around
+      before it's considered too old and needs to be rebuilt */
+-  PIECE_LIST_SHELF_LIFE_SECS = 60,
++  PIECE_LIST_SHELF_LIFE_SECS = 40,
+ 
+   /* use for bitwise operations w/peer_atom.flags2 */
+   MYFLAG_BANNED = 1,
+@@ -91,10 +91,10 @@
+   MYFLAG_UNREACHABLE = 2,
+ 
+   /* the minimum we'll wait before attempting to reconnect to a peer */
+-  MINIMUM_RECONNECT_INTERVAL_SECS = 5,
++  MINIMUM_RECONNECT_INTERVAL_SECS = 3,
+ 
+   /** how long we'll let requests we've made linger before we cancel them */
+-  REQUEST_TTL_SECS = 90,
++  REQUEST_TTL_SECS = 50,
+ 
+   NO_BLOCKS_CANCEL_HISTORY = 120,
+ 

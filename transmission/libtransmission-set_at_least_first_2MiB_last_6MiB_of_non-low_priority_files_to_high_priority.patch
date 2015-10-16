@@ -1,0 +1,11 @@
+--- libtransmission/torrent.c.orig	2013-06-29 00:43:35.981639729 +0300
++++ libtransmission/torrent.c	2013-06-29 00:45:07.229210223 +0300
+@@ -677,7 +677,7 @@
+          last pieces can sometimes allow you to preview it a bit
+          before it's fully downloaded... */
+       if (file->priority >= TR_PRI_NORMAL)
+-        if (file->firstPiece == piece || file->lastPiece == piece)
++        if ( ((piece - file->firstPiece) <= (2*1024*1024)/tor->info.pieceSize) || ((file->lastPiece - piece) <= (6*1024*1024+tor->info.pieceSize-tor->lastPieceSize)/tor->info.pieceSize) )
+           priority = TR_PRI_HIGH;
+     }
+ 

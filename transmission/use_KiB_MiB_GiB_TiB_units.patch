@@ -1,0 +1,165 @@
+For some reason, transmission opted not to use IEC units
+(KiB,MiB,GiB,TiB) for sizes and speed. But made it easy to do so.
+
+This patch changes this behaviour.
+
+--- daemon/remote.c.orig	2013-06-11 19:27:16.031645716 +0300
++++ daemon/remote.c	2013-06-11 19:28:35.576812181 +0300
+@@ -51,19 +51,19 @@
+ #define MEM_G_STR "GiB"
+ #define MEM_T_STR "TiB"
+ 
+-#define DISK_K 1000
++#define DISK_K 1024
+ #define DISK_B_STR  "B"
+-#define DISK_K_STR "kB"
+-#define DISK_M_STR "MB"
+-#define DISK_G_STR "GB"
+-#define DISK_T_STR "TB"
++#define DISK_K_STR "KiB"
++#define DISK_M_STR "MiB"
++#define DISK_G_STR "GiB"
++#define DISK_T_STR "TiB"
+ 
+-#define SPEED_K 1000
++#define SPEED_K 1024
+ #define SPEED_B_STR  "B/s"
+-#define SPEED_K_STR "kB/s"
+-#define SPEED_M_STR "MB/s"
+-#define SPEED_G_STR "GB/s"
+-#define SPEED_T_STR "TB/s"
++#define SPEED_K_STR "KiB/s"
++#define SPEED_M_STR "MiB/s"
++#define SPEED_G_STR "GiB/s"
++#define SPEED_T_STR "TiB/s"
+ 
+ /***
+ ****
+--- daemon/daemon.c.orig	2013-06-11 19:35:15.912595283 +0300
++++ daemon/daemon.c	2013-06-11 19:35:04.012819710 +0300
+@@ -43,19 +43,19 @@
+ #define MEM_G_STR "GiB"
+ #define MEM_T_STR "TiB"
+ 
+-#define DISK_K 1000
++#define DISK_K 1024
+ #define DISK_B_STR  "B"
+-#define DISK_K_STR "kB"
+-#define DISK_M_STR "MB"
+-#define DISK_G_STR "GB"
+-#define DISK_T_STR "TB"
++#define DISK_K_STR "KiB"
++#define DISK_M_STR "MiB"
++#define DISK_G_STR "GiB"
++#define DISK_T_STR "TiB"
+ 
+-#define SPEED_K 1000
++#define SPEED_K 1024
+ #define SPEED_B_STR  "B/s"
+-#define SPEED_K_STR "kB/s"
+-#define SPEED_M_STR "MB/s"
+-#define SPEED_G_STR "GB/s"
+-#define SPEED_T_STR "TB/s"
++#define SPEED_K_STR "KiB/s"
++#define SPEED_M_STR "MiB/s"
++#define SPEED_G_STR "GiB/s"
++#define SPEED_T_STR "TiB/s"
+ 
+ #define LOGFILE_MODE_STR "a+"
+ 
+--- cli/cli.c.orig	2014-07-10 04:11:39.912476985 +0300
++++ cli/cli.c	2014-07-10 04:13:30.404977985 +0300
+@@ -44,19 +44,19 @@
+ #define MEM_G_STR "GiB"
+ #define MEM_T_STR "TiB"
+ 
+-#define DISK_K 1000
++#define DISK_K 1024
+ #define DISK_B_STR   "B"
+-#define DISK_K_STR "kB"
+-#define DISK_M_STR "MB"
+-#define DISK_G_STR "GB"
+-#define DISK_T_STR "TB"
++#define DISK_K_STR "KiB"
++#define DISK_M_STR "MiB"
++#define DISK_G_STR "GiB"
++#define DISK_T_STR "TiB"
+ 
+-#define SPEED_K 1000
++#define SPEED_K 1024
+ #define SPEED_B_STR  "B/s"
+-#define SPEED_K_STR "kB/s"
+-#define SPEED_M_STR "MB/s"
+-#define SPEED_G_STR "GB/s"
+-#define SPEED_T_STR "TB/s"
++#define SPEED_K_STR "KiB/s"
++#define SPEED_M_STR "MiB/s"
++#define SPEED_G_STR "GiB/s"
++#define SPEED_T_STR "TiB/s"
+ 
+ /***
+ ****
+--- utils/show.c.orig	2014-07-10 04:14:09.733767582 +0300
++++ utils/show.c	2014-07-10 04:15:12.589866303 +0300
+@@ -33,19 +33,19 @@
+ #define MEM_G_STR "GiB"
+ #define MEM_T_STR "TiB"
+ 
+-#define DISK_K 1000
++#define DISK_K 1024
+ #define DISK_B_STR  "B"
+-#define DISK_K_STR "kB"
+-#define DISK_M_STR "MB"
+-#define DISK_G_STR "GB"
+-#define DISK_T_STR "TB"
++#define DISK_K_STR "KiB"
++#define DISK_M_STR "MiB"
++#define DISK_G_STR "GiB"
++#define DISK_T_STR "TiB"
+ 
+-#define SPEED_K 1000
++#define SPEED_K 1024
+ #define SPEED_B_STR  "B/s"
+-#define SPEED_K_STR "kB/s"
+-#define SPEED_M_STR "MB/s"
+-#define SPEED_G_STR "GB/s"
+-#define SPEED_T_STR "TB/s"
++#define SPEED_K_STR "KiB/s"
++#define SPEED_M_STR "MiB/s"
++#define SPEED_G_STR "GiB/s"
++#define SPEED_T_STR "TiB/s"
+ 
+ static tr_option options[] =
+ {
+--- libtransmission/libtransmission-test.c.orig	2014-07-10 04:18:39.215852953 +0300
++++ libtransmission/libtransmission-test.c	2014-07-10 04:16:26.187686443 +0300
+@@ -186,19 +186,19 @@
+ #define MEM_G_STR "GiB"
+ #define MEM_T_STR "TiB"
+ 
+-#define DISK_K 1000
++#define DISK_K 1024
+ #define DISK_B_STR  "B"
+-#define DISK_K_STR "kB"
+-#define DISK_M_STR "MB"
+-#define DISK_G_STR "GB"
+-#define DISK_T_STR "TB"
++#define DISK_K_STR "KiB"
++#define DISK_M_STR "MiB"
++#define DISK_G_STR "GiB"
++#define DISK_T_STR "TiB"
+ 
+-#define SPEED_K 1000
++#define SPEED_K 1024
+ #define SPEED_B_STR  "B/s"
+-#define SPEED_K_STR "kB/s"
+-#define SPEED_M_STR "MB/s"
+-#define SPEED_G_STR "GB/s"
+-#define SPEED_T_STR "TB/s"
++#define SPEED_K_STR "KiB/s"
++#define SPEED_M_STR "MiB/s"
++#define SPEED_G_STR "GiB/s"
++#define SPEED_T_STR "TiB/s"
+ 
+ tr_session *
+ libttest_session_init (tr_variant * settings)
