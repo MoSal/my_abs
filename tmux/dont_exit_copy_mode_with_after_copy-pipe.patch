@@ -1,0 +1,11 @@
+--- window-copy.c.orig	2015-10-28 23:24:09.738474094 +0300
++++ window-copy.c	2015-10-28 23:26:39.206478813 +0300
+@@ -595,7 +595,7 @@
+ 	case MODEKEYCOPY_COPYPIPE:
+ 		if (sess != NULL) {
+ 			window_copy_copy_pipe(wp, sess, NULL, arg);
+-			window_pane_reset_mode(wp);
++			/* window_pane_reset_mode(wp); */
+ 			return;
+ 		}
+ 		break;
